@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+from auth import API_KEY
+
+if API_KEY == str(""):
+   API_KEY = input('please enter your Shodan API Key now:')
+   auth_file = open("auth.py", "w")
+   auth_file.write("API_KEY: %s" % API_KEY)
+   auth_file.close
+
