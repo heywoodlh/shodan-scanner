@@ -40,8 +40,7 @@ try:
         #Print all banners
         for item in host['data']:
                 print("Port: %s \n Banner: %s \n" % (item['port'], item['data']))
-    else:
-        print('syntax: ./shodan ' + str(commands) + ' search_keyword')
+
 except IndexError:
     print('syntax: ./shodan ' + str(commands) + ' search_keyword')
 
