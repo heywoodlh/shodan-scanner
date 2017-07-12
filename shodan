@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+from auth import api_key
+import shodan
+import sys
+
+commands = ["search"]
+
+if api_key == str(""):
+    api_key = input('please enter your Shodan API Key now:')
+    auth_file = open("auth.py", "w")
+    auth_file.write("api_key = '%s'" % api_key)
+    auth_file.close
+    sys.exit(0)
+
+
+api = shodan.Shodan(api_key)
+
+try:
+    if sys.argv[1] == "search" and sys.argv[2:]:
+        try:
+		# Search Shodan
+        	results = api.search(sys.argv[2])
+
+        	# Show the results
+        	print('Results found: %s' % results['total'])
+        	for result in results['matches']:
+                	print('IP: %s' % result['ip_str'])
+                	print(result['data'])
+                	print('') 
+
+        except shodan.APIError as e:
+            print('Error: %' % e)
+
+except IndexError:
+    print('syntax: ./shodan ' + str(commands) + ' search_keyword')
+
