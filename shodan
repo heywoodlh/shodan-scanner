@@ -3,7 +3,7 @@ from auth import api_key
 import shodan
 import sys
 
-commands = ["search"]
+commands = ["search", "host"]
 
 if api_key == str(""):
     api_key = input('please enter your Shodan API Key now:')
@@ -31,6 +31,17 @@ try:
         except shodan.APIError as e:
             print('Error: %' % e)
 
+
+    if sys.argv[1] == "host" and sys.argv[2:]:
+        #Set the hostname to check
+        host = api.host(sys.argv[2:])
+        #Print general info
+        print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
+        #Print all banners
+        for item in host['data']:
+                print("Port: %s \n Banner: %s \n" % (item['port'], item['data']))
+    else:
+        print('syntax: ./shodan ' + str(commands) + ' search_keyword')
 except IndexError:
     print('syntax: ./shodan ' + str(commands) + ' search_keyword')
 
