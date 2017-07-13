@@ -1,6 +1,6 @@
 # shodan-scripts
 
-## *Description:*
+## Description:
 These scripts are intended to easily use Shodan's API to search and scan for hosts, vulnerabilities, etc. 
 
 This collection of scripts are built on the Shodan Python module for the Shodan searches and the Slacker python module for Slack notification integration. 
@@ -26,7 +26,7 @@ These scripts were designed to use Slack as the main notification/logging agent.
 
 
 
-## *Usage:*
+## Usage:
 First, install the dependencies in requirements.txt by running:
 
 `sudo pip3 install -r requirements.txt`
