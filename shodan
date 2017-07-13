@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-from auth import api_key
 import shodan
 import sys
+
+api_key = ""
 
 commands = ["search", "host"]
 

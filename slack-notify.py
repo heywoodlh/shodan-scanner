@@ -2,7 +2,11 @@
 from slacker import Slacker
 import sys
 import subprocess
-from auth import token, channel, enabled
+
+token = ""
+channel = ""
+enabled = "false"
+
 
 slack = Slacker(str(token))
 
