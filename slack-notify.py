@@ -11,7 +11,7 @@ enabled = "false"
 slack = Slacker(str(token))
 
 if enabled == "false":
-    sys.exit(1)
+    sys.exit(0)
 
 f = open( "shodanhostscan.log")
 messages = []
