@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
 from slacker import Slacker
 import sys
+import subprocess
+from auth import token, channel, enabled
 
-token = sys.argv[1]
-channel = sys.argv[2]
-message = sys.argv[3]
+slack = Slacker(token)
 
-slack = Slacker('token')
+if enabled == "false":
+    sys.exit(1)
 
-# replace '#general' with correct slack channel and 'Hello fellow slackers!' with your message
-    slack.chat.post_message(str(token), str(message))
+f = open( "shodanhostscan.log")
+messages = []
+for line in f:
+    messages.append(line)
+f.close()
+
+final_message = ''.join(messages)
+
+message = print(final_message)
+
+slack.chat.post_message(str(channel), str(message))
