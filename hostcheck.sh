@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #Bash script for regularly checking on specific hosts to see if they have been scanned and posted on Shodan
 
-#If you would like to enable slack notification please configure the slack variables in auth.py
+#If you would like to enable slack notification please configure the slack variables in slack-notify.py
 
-AUTH_STATE="$(cat auth.py | grep "api_key")"
+AUTH_STATE="$(cat shodan | grep "api_key")"
 if [[ "$AUTH_STATE" == 'api_key = ""' ]]
 then
-	echo "please configure an api key in auth.py"
+	echo "please configure an api key in shodan file"
 	exit 1
 fi
 
