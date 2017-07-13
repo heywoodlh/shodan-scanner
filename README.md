@@ -10,9 +10,7 @@ These scripts were designed to use Slack as the main notification/logging agent.
 
 
 #### File description:
-- auth.py: Contains configuration information for Shodan's API key and Slack's API key and channel information. All scripts depend on this file being configured correctly in order to work.
-
-- hostcheck.sh: Script that will search Shodan for any information posted on hosts specified in hosts.txt file and will send any relevant information to Slack channel specified in auth.py (requires auth.py to be configured for Shodan/Slack integrations). This script uses the "shodan" file in this repository to do searches for the hosts using Shodan's API. It also uses hosts.txt to know which hosts to scan. Lastly, this script also uses slack-notify.py to send notifications to Slack using the API key and channel specified in auth.pyi. See below for usage details.  
+- hostcheck.sh: Script that will search Shodan for any information posted on hosts specified in hosts.txt file and will send any relevant information to Slack channel specified in slack-notify.py (requires files shodan and slack-notify.py to be configured for Shodan/Slack integrations). This script uses the "shodan" file in this repository to do searches for the hosts using Shodan's API. It also uses hosts.txt to know which hosts to scan. Lastly, this script also uses slack-notify.py to send notifications to Slack using the API key and channel specified in slack-notify.py. See below for usage details.  
 
 - hosts.txt: File that contains desired hosts for hostcheck.sh. IP addresses or hostnames are compatible but will need to be separated line by line in order for the hostcheck.sh script to parse it correctly.
 
@@ -22,8 +20,7 @@ These scripts were designed to use Slack as the main notification/logging agent.
 
 - shodanhostscan.log: Contains the information from the last scan performed by hostcheck.sh.
 
-- slack-notify.py: Python program that will send the text in shodanhostscan.log to Slack. Requires auth.py to be configured with the Slack API key and channel in order to work correctly.
-
+- slack-notify.py: Python program that will send the text in shodanhostscan.log to Slack. Contains token, channel and enabled variables which will need to be configured with correct information in order to send notifications.
 
 
 ## Usage:
@@ -32,7 +29,13 @@ First, install the dependencies in requirements.txt by running:
 `sudo pip3 install -r requirements.txt`
 
 
-The two files intended to be executed on their own is "shodan" and "hostcheck.sh". Both require auth.py to be configured before they can be used.
+### Shodan Configuration
+Edit "api_key" variable within shodan file to equal correct Shodan API key value.
+
+### Slack configuration
+Edit "token" and "channel" variables within slack-notify.py to equal respective Slack API key (token) and Slack channel. Also change the 'enabled = "false"' to 'enabled = "true"' within slack-notify.py to enable Slack notifications.
+
+The two files intended to be executed on their own is "shodan" and "hostcheck.sh". File "shodan" needs to be configured with Shodan API key or else it will not work.
 
 #### shodan
 The shodan program is intended to search shodan for a keyword (such as webcams, apache, etc.) or for specific hosts. This program requires that you search hosts using IP addresses and not domain names.
@@ -42,4 +45,4 @@ The shodan program is intended to search shodan for a keyword (such as webcams, 
 `./shodan host 205.120.89.10`
 
 #### hostcheck.sh
-The hostcheck.sh script is intended to either be run as a cron job or as a stand alone script. Once it is executed it will read the hosts.txt file and search Shodan using the API to see if there is any relevant information specific to that host stored on Shodan. It will then save that output to shodanhostscan.log, overwriting any information that it may have stored previously. Then it executes slack-notify.py which reads the shodanhostscan.log file and sends that output to the respective Slack team and channel that is configured in auth.py. 
+The hostcheck.sh script is intended to either be run as a cron job or as a stand alone script. Once it is executed it will read the hosts.txt file and search Shodan using the API to see if there is any relevant information specific to that host stored on Shodan. It will then save that output to shodanhostscan.log, overwriting any information that it may have stored previously. Then it executes slack-notify.py which reads the shodanhostscan.log file and sends that output to the respective Slack team and channel that is configured in slack-notify.py. 
