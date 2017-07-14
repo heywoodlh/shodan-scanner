@@ -29,22 +29,28 @@ First, install the dependencies in requirements.txt by running:
 `sudo pip3 install -r requirements.txt`
 
 
-### Shodan Configuration
+#### Shodan Configuration
 Edit "api_key" variable within shodan file to equal correct Shodan API key value.
 
+<<<<<<< HEAD
 ### Slack configuration
 Change the NOTIFY variable to equal "true" in hostcheck.sh.
 
+||||||| merged common ancestors
+### Slack configuration
+=======
+#### Slack configuration
+>>>>>>> 19d7774cf69b90fc5f5d3a4cc7d7b0812f9961e1
 Edit "token" and "channel" variables within slack-notify.py to equal respective Slack API key (token) and Slack channel. Also change the 'enabled = "false"' to 'enabled = "true"' within slack-notify.py to enable Slack notifications.
 
 The two files intended to be executed on their own is "shodan" and "hostcheck.sh". File "shodan" needs to be configured with Shodan API key or else it will not work.
 
-#### shodan
+### shodan
 The shodan program is intended to search shodan for a keyword (such as webcams, apache, etc.) or for specific hosts. This program requires that you search hosts using IP addresses and not domain names.
 
 - shodan usage example:
 `./shodan search apache` 
 `./shodan host 205.120.89.10`
 
-#### hostcheck.sh
+### hostcheck.sh
 The hostcheck.sh script is intended to either be run as a cron job or as a stand alone script. Once it is executed it will read the hosts.txt file and search Shodan using the API to see if there is any relevant information specific to that host stored on Shodan. It will then save that output to shodanhostscan.log, overwriting any information that it may have stored previously. Then it executes slack-notify.py which reads the shodanhostscan.log file and sends that output to the respective Slack team and channel that is configured in slack-notify.py. 
