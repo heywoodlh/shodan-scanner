@@ -5,7 +5,7 @@ import subprocess
 
 token = ""
 channel = ""
-enabled = ""
+enabled = "true"
 
 
 slack = Slacker(str(token))
