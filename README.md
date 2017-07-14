@@ -33,6 +33,8 @@ First, install the dependencies in requirements.txt by running:
 Edit "api_key" variable within shodan file to equal correct Shodan API key value.
 
 ### Slack configuration
+Change the NOTIFY variable to equal "true" in hostcheck.sh.
+
 Edit "token" and "channel" variables within slack-notify.py to equal respective Slack API key (token) and Slack channel. Also change the 'enabled = "false"' to 'enabled = "true"' within slack-notify.py to enable Slack notifications.
 
 The two files intended to be executed on their own is "shodan" and "hostcheck.sh". File "shodan" needs to be configured with Shodan API key or else it will not work.
