@@ -19,10 +19,8 @@ api = shodan.Shodan(api_key)
 try:
     if sys.argv[1] == "search" and sys.argv[2:]:
         try:
-		# Search Shodan
         	results = api.search(sys.argv[2])
 
-        	# Show the results
         	print('Results found: %s' % results['total'])
         	for result in results['matches']:
                 	print('IP: %s' % result['ip_str'])
