@@ -3,6 +3,11 @@
 
 #If you would like to enable slack notification please configure the slack variables in slack-notify.py
 
+#Variables to configure
+#Change NOTIFY to equal true if you would like Slack notifications enabled 
+NOTIFY="true"
+
+
 AUTH_STATE="$(cat shodan | grep "api_key")"
 if [[ "$AUTH_STATE" == 'api_key = ""' ]]
 then
@@ -14,11 +19,8 @@ GROUP="$(cat hosts.txt)"
 
 shodan_scan() {
 	DATE="$(date +%D\ %H:%M:%S)"
-	echo "$DATE"
-	echo "$HOSTNAME"
+	echo "$DATE\n$HOSTNAME"
 	./shodan host "$IND_HOSTS"
-	printf "\n"
-	printf "\n"
 }
 
 HOSTNAME="$HOSTS"
@@ -34,25 +36,12 @@ do
 	if [[ "$IND_HOSTS" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] 
 	then
 		NEW_LOGS="$(shodan_scan)"
-		if [[ "$NEW_LOGS" != "$OLD_LOGS" ]]
-		then 
-			NOTIFY="true"
-		else
-			NOTIFY="false" 
-		fi
 
 		echo "$NEW_LOGS" >> shodanhostscan.log
 	else
 	        HOSTNAME="$IND_HOSTS"
 	        IND_HOSTS="$(dig +short $IND_HOSTS)"
 		NEW_LOGS="$(shodan_scan)"
-
-	        if [[ "$NEW_LOGS" != "$OLD_LOGS" ]]
-	        then 
-	       		NOTIFY="true"
-	        else
-			NOTIFY="false" 
-	        fi
 
 		echo "$NEW_LOGS" >> shodanhostscan.log
         fi	  	
@@ -62,7 +51,7 @@ slack_notifications() {
 	./slack-notify.py
 }
 
-if [[ "$NOTIFY" == "true" ]] && [[ "$SLACK_API" != "" ]] && [[ "$CHANNEL" != "" ]] 
+if [[ "$NOTIFY" == "true" ]] 
 then
 	slack_notifications
 fi
