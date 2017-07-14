@@ -5,7 +5,7 @@
 
 #Variables to configure
 #Change NOTIFY to equal true if you would like Slack notifications enabled 
-NOTIFY="true"
+NOTIFY="false"
 
 
 AUTH_STATE="$(cat shodan | grep "api_key")"
