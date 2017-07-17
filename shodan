@@ -8,10 +8,7 @@ api_key = ""
 commands = ["search", "host", "host-add", "host-delete", "host-list", "hostscan-all"]
 
 if api_key == str(""):
-    api_key = input('please enter your Shodan API Key now:')
-    auth_file = open("auth.py", "w")
-    auth_file.write("api_key = '%s'" % api_key)
-    auth_file.close
+    print('please give api_key variable in ' + sys.argv[0] + ' the correct Shodan API value')
     sys.exit(0)
 
 api = shodan.Shodan(api_key)
@@ -23,8 +20,12 @@ def shodan_hostscan():
         	for item in host['data']:
                 	print("Port: %s \n Banner: %s \n" % (item['port'], item['data'])) 
 
-
 try:
+    if sys.argv[1] == "-h":
+        print("'syntax: " + str(commands) + " keyword_or_hostname'")
+        print("Please consult the README.md file for more information and usage examples")
+        sys.exit(0)
+
     if sys.argv[1] == "search" and sys.argv[2:]:
         for hosts in sys.argv[2:]:
             try:
@@ -99,6 +100,5 @@ try:
             for item in host['data']:
                 print("Port: %s \n Banner: %s \n" % (item['port'], item['data'])) 
             
-except IndexError:
-    print('syntax: ./shodan ' + str(commands) + ' search_keyword')
-
+except (IndexError, shodan.exception.APIError) as e:
+    print('Error: ' + str(e))
