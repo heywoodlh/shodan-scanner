@@ -10,9 +10,7 @@ These scripts were designed to use Slack as the main notification/logging agent.
 
 
 #### File description:
-- hostcheck.sh: Script that will search Shodan for any information posted on hosts specified in hosts.txt file and will send any relevant information to Slack channel specified in slack-notify.py (requires files shodan and slack-notify.py to be configured for Shodan/Slack integrations). This script uses the "shodan" file in this repository to do searches for the hosts using Shodan's API. It also uses hosts.txt to know which hosts to scan. Lastly, this script also uses slack-notify.py to send notifications to Slack using the API key and channel specified in slack-notify.py. See below for usage details.  
-
-- hosts.txt: File that contains desired hosts for hostcheck.sh. IP addresses or hostnames are compatible but will need to be separated line by line in order for the hostcheck.sh script to parse it correctly.
+- hostcheck.sh: Script that will search Shodan for any information posted on hosts specified in hosts.txt file and will send any relevant information to Slack channel specified in slack-notify.py (requires files shodan and slack-notify.py to be configured for Shodan/Slack integrations). This script uses the "shodan" file in this repository to do searches for the hosts using Shodan's API. It also uses the functionality of sqlite3 (built into the shodan program in this repository) to know which hosts to scan. Lastly, this script also uses slack-notify.py to send notifications to Slack using the API key and channel specified in slack-notify.py. See below for usage details.
 
 - requirements.txt: Contains Python dependencies essential for scripts to run correctly.
 
@@ -41,8 +39,15 @@ The two files intended to be executed on their own is "shodan" and "hostcheck.sh
 The shodan program is intended to search shodan for a keyword (such as webcams, apache, etc.) or for specific hosts. This program requires that you search hosts using IP addresses and not domain names.
 
 - shodan usage example:
-`./shodan search apache` 
-`./shodan host 205.120.89.10`
+`./shodan search apache` -- this performs a keyword search on the word "apache"
+`./shodan host 205.120.89.10`-- this performs a host lookup on Shodan for the IP address 205.120.89.10
+
+The shodan program has been built with sqlite to store hostnames if continuous scanning is desired for specific hosts. These are the basic commands for this functionality:
+
+`./shodan host-add 205.120.89.10` -- adds a host to be stored in sqlite database
+`./shodan host-delete 205.120.89.10` -- deletes the host from the sqlite database
+`./shodan host-list` -- lists all hosts stored in the database
+`./shodan hostscan-all` -- performs a host scan on all hosts stored in the database
 
 ### hostcheck.sh
-The hostcheck.sh script is intended to either be run as a cron job or as a stand alone script. Once it is executed it will read the hosts.txt file and search Shodan using the API to see if there is any relevant information specific to that host stored on Shodan. It will then save that output to shodanhostscan.log, overwriting any information that it may have stored previously. Then it executes slack-notify.py which reads the shodanhostscan.log file and sends that output to the respective Slack team and channel that is configured in slack-notify.py. 
+The hostcheck.sh script is intended to either be run as a cron job or as a stand alone script. Once it is executed it will read the hosts that have been added to the sqlite database through the shodan program in this repository and searches Shodan using the API to see if there is any relevant information specific to each respective host stored on Shodan. It will then save that output to shodanhostscan.log, overwriting any information that it may have stored previously. Then it executes slack-notify.py which reads the shodanhostscan.log file and sends that output to the respective Slack team and channel that is configured in slack-notify.py. 
