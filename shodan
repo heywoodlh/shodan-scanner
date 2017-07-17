@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import shodan
 import sys
+import sqlite3
 
-api_key = ""
+api_key = "fW9K4luEx65RscfUiPDakiqp15jiK5f6"
 
-commands = ["search", "host"]
+commands = ["search", "host", "host-add", "host-delete", "host-list", "hostscan-all"]
 
 if api_key == str(""):
     api_key = input('please enter your Shodan API Key now:')
@@ -13,33 +14,91 @@ if api_key == str(""):
     auth_file.close
     sys.exit(0)
 
-
 api = shodan.Shodan(api_key)
+
+def shodan_hostscan():
+	for hosts in hostname_list:
+        	host = api.host(hosts)
+        	print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
+        	for item in host['data']:
+                	print("Port: %s \n Banner: %s \n" % (item['port'], item['data'])) 
+
 
 try:
     if sys.argv[1] == "search" and sys.argv[2:]:
-        try:
-        	results = api.search(sys.argv[2])
+        for hosts in sys.argv[2:]:
+            try:
+        	    results = api.search(hosts)
 
-        	print('Results found: %s' % results['total'])
-        	for result in results['matches']:
-                	print('IP: %s' % result['ip_str'])
-                	print(result['data'])
-                	print('') 
+        	    print('Results found: %s' % results['total'])
+        	    for result in results['matches']:
+                	    print('IP: %s' % result['ip_str'])
+                	    print(result['data'])
+                	    print('') 
 
-        except shodan.APIError as e:
-            print('Error: %' % e)
+            except shodan.APIError as e:
+                print('Error: %' % e)
 
 
-    if sys.argv[1] == "host" and sys.argv[2:]:
-        #Set the hostname to check
-        host = api.host(sys.argv[2:])
-        #Print general info
-        print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
-        #Print all banners
-        for item in host['data']:
-                print("Port: %s \n Banner: %s \n" % (item['port'], item['data']))
+    if sys.argv[1] == "host" and sys.argv[2]:
+        for hosts in sys.argv[2:]:
+            host = api.host(sys.argv[2:])
+            #Print general info
+            print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
+            #Print all banners
+            for item in host['data']:
+                    print("Port: %s \n Banner: %s \n" % (item['port'], item['data']))
 
+    if sys.argv[1] == "host-add" and sys.argv[2:]:
+        conn = sqlite3.connect('shodan-scan')
+        c = conn.cursor()
+        try: 
+            c.execute('''CREATE TABLE hostnames
+                    (varchar)''')
+        except sqlite3.OperationalError:
+            pass
+        for hosts in sys.argv[2:]:
+            c.execute('INSERT INTO hostnames VALUES (?)', (hosts,))
+            conn.commit()
+
+    if sys.argv[1] == "host-delete" and sys.argv[2:]:
+        conn = sqlite3.connect('shodan-scan')
+        c = conn.cursor()
+        try: 
+            c.execute('''CREATE TABLE hostnames
+                        (varchar)''')
+        except sqlite3.OperationalError:
+            pass
+        
+        for hosts in sys.argv[2:]:
+            conn = sqlite3.connect('shodan-scan')
+            c = conn.cursor()
+            c.execute("DELETE FROM hostnames WHERE varchar=?", (hosts,))
+            conn.commit()
+
+    if sys.argv[1] == "host-list":
+        conn = sqlite3.connect('shodan-scan')
+        c = conn.cursor()
+        try: 
+            c.execute('''CREATE TABLE hostnames
+                        (varchar)''')
+        except sqlite3.OperationalError:
+            pass
+        for row in c.execute("SELECT * FROM hostnames"):
+            print(row)
+
+    if sys.argv[1] == "hostscan-all":
+        try: 
+            c.execute('''CREATE TABLE hostnames
+                        (varchar)''')
+        except sqlite3.OperationalError:
+            pass
+        for hosts in hostname_list:
+            host = api.host(hosts)
+            print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
+            for item in host['data']:
+                print("Port: %s \n Banner: %s \n" % (item['port'], item['data'])) 
+            
 except IndexError:
     print('syntax: ./shodan ' + str(commands) + ' search_keyword')
 
