@@ -3,7 +3,7 @@ import shodan
 import sys
 import sqlite3
 
-api_key = "fW9K4luEx65RscfUiPDakiqp15jiK5f6"
+api_key = ""
 
 commands = ["search", "host", "host-add", "host-delete", "host-list", "hostscan-all"]
 
