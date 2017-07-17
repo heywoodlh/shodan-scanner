@@ -13,13 +13,6 @@ if api_key == str(""):
 
 api = shodan.Shodan(api_key)
 
-def shodan_hostscan():
-	for hosts in hostname_list:
-        	host = api.host(hosts)
-        	print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
-        	for item in host['data']:
-                	print("Port: %s \n Banner: %s \n" % (item['port'], item['data'])) 
-
 try:
     if sys.argv[1] == "-h":
         print("'syntax: " + str(commands) + " keyword_or_hostname'")
