@@ -16,8 +16,6 @@ These scripts were designed to use Slack as the main notification/logging agent.
 
 - shodan: Python program that interacts with Shodan's API to search for key words or specific hosts. See below for usage information.
 
-- shodanhostscan.log: Contains the information from the last scan performed by hostcheck.sh.
-
 - slack-notify.py: Python program that will send the text in shodanhostscan.log to Slack. Contains token, channel and enabled variables which will need to be configured with correct information in order to send notifications.
 
 
