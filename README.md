@@ -45,8 +45,11 @@ The shodan program is intended to search shodan for a keyword (such as webcams, 
 The shodan program has been built with sqlite to store hostnames if continuous scanning is desired for specific hosts. These are the basic commands for this functionality:
 
 `./shodan host-add 205.120.89.10` -- adds a host to be stored in sqlite database
+
 `./shodan host-delete 205.120.89.10` -- deletes the host from the sqlite database
+
 `./shodan host-list` -- lists all hosts stored in the database
+
 `./shodan hostscan-all` -- performs a host scan on all hosts stored in the database
 
 ### hostcheck.sh
