@@ -39,7 +39,9 @@ The two files intended to be executed on their own is "shodan" and "hostcheck.sh
 The shodan program is intended to search shodan for a keyword (such as webcams, apache, etc.) or for specific hosts. This program requires that you search hosts using IP addresses and not domain names.
 
 - shodan usage example:
+
 `./shodan search apache` -- this performs a keyword search on the word "apache"
+
 `./shodan host 205.120.89.10`-- this performs a host lookup on Shodan for the IP address 205.120.89.10
 
 The shodan program has been built with sqlite to store hostnames if continuous scanning is desired for specific hosts. These are the basic commands for this functionality:
