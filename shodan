@@ -3,7 +3,7 @@ import shodan
 import sys
 import sqlite3
 
-api_key = "fW9K4luEx65RscfUiPDakiqp15jiK5f6"
+api_key = ""
 
 commands = ["search", "host", "host-add", "host-delete", "host-list", "hostscan-all"]
 
@@ -82,31 +82,47 @@ try:
             print(row)
 
     if sys.argv[1] == "hostscan-all":
-        def scan_all():
-            conn = sqlite3.connect('shodan-scan')
-            c = conn.cursor()
-            try: 
-                c.execute('''CREATE TABLE hostnames
-                            (varchar)''')
-            except sqlite3.OperationalError:
-                pass
-            for hosts in hostname_list:
-                host = api.host(hosts)
-                print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
-                for item in host['data']:
-                    print("Port: %s \n Banner: %s \n" % (item['port'], item['data'])) 
-
-        logfile = str(scan_all)
         conn = sqlite3.connect('shodan-scan')
         c = conn.cursor()
-        try:
-            c.execute('''CREATE TABLE host_logs
+        try: 
+            c.execute('''CREATE TABLE hostnames
                         (varchar)''')
         except sqlite3.OperationalError:
             pass
-        c.execute('INSERT INTO host_logs VALUES (?)', (logfile,))
-        conn.commit()
-            
+        for hosts in c.execute('SELECT * FROM hostnames'):
+            logfile = []
+            def general_info():
+                    host = api.host(hosts)
+                    return ("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
+                
+            def other_info():
+                conn = sqlite3.connect('shodan-scan')
+                c = conn.cursor()
+                try:
+                    c.execute('''CREATE TABLE hostnames
+                                (varchar)''')
+                except sqlite3.OperationalError:
+                    pass
+                for hosts in c.execute('SELECT * FROM hostnames'):
+                    host = api.host(hosts)
+                for item in host['data']:
+                            return ("Port: %s \n Banner: %s" % (item['port'], item['data'])) 
+        
+            logfile.append(general_info())
+            logfile.append(other_info())
+        
+            final_logfile = "".join(logfile)
+
+            conn = sqlite3.connect('shodan-scan')
+            c = conn.cursor()
+            try:
+                c.execute('''CREATE TABLE host_logs
+                            (varchar)''')
+            except sqlite3.OperationalError:
+                pass
+            c.execute('INSERT INTO host_logs VALUES (?)', (final_logfile,))
+            print(final_logfile)
+        conn.commit()   
 
 except (IndexError, shodan.exception.APIError) as e:
     print('Error: ' + str(e))
