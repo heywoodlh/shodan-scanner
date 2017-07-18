@@ -5,7 +5,7 @@ import sqlite3
 
 api_key = ""
 
-commands = ["search", "host", "host-add", "host-delete", "host-list", "hostscan-all"]
+commands = ["search", "host", "host-add", "host-delete", "host-list", "hostscan-all", "list-scanlogs"]
 
 if api_key == str(""):
     print('please give api_key variable in ' + sys.argv[0] + ' the correct Shodan API value')
@@ -122,7 +122,21 @@ try:
                 pass
             c.execute('INSERT INTO host_logs VALUES (?)', (final_logfile,))
             print(final_logfile)
-        conn.commit()   
+        conn.commit() 
+
+    if sys.argv[1] == "list-scanlogs":
+        def all_logs(): 
+            conn = sqlite3.connect('shodan-scan')
+            c = conn.cursor()
+            try: 
+                c.execute('''CREATE TABLE host_logs
+                            (varchar)''')
+            except sqlite3.OperationalError:
+                pass
+            for row in c.execute("SELECT * FROM host_logs"):
+                return(row)
+        print_logs = ''.join(all_logs())
+        print(print_logs)
 
 except (IndexError, shodan.exception.APIError) as e:
     print('Error: ' + str(e))
