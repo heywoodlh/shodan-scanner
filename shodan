@@ -2,6 +2,10 @@
 import shodan
 import sys
 import sqlite3
+from IPy import IP
+import dns.resolver
+import re
+import urllib.parse
 
 api_key = ""
 
@@ -35,11 +39,25 @@ try:
 
 
     if sys.argv[1] == "host" and sys.argv[2]:
-        for hosts in sys.argv[2:]:
-            host = api.host(sys.argv[2:])
-            #Print general info
+        hostnames = sys.argv[2:]
+        hostlist = []
+        for hosts in hostnames:
+            try: 
+                IP(hosts)
+                non_ip = 'false'
+            except ValueError:
+                def dig():
+                    for ip in dns.resolver.query(hosts, 'A'):
+                        return str(ip)
+                hostlist.append(dig())
+                non_ip = 'true'
+        
+        if non_ip == 'true':
+            hostnames = hostlist
+
+        for hosts in hostnames:
+            host = api.host(hosts)
             print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
-            #Print all banners
             for item in host['data']:
                     print("Port: %s \n Banner: %s \n" % (item['port'], item['data']))
 
@@ -89,11 +107,39 @@ try:
                         (varchar)''')
         except sqlite3.OperationalError:
             pass
-        for hosts in c.execute('SELECT * FROM hostnames'):
+
+
+        
+        domain_names = []
+
+        for rows in c.execute('SELECT * FROM hostnames'):
+            domain_names.extend(rows)
+        
+        #STOPPED HERE -- domain_names variable printing incorrect formatting for hostnames
+
+        hostlist = []
+
+        for hosts in domain_names:
+            try:
+                IP(hosts)
+                host_is_ip = 'true'
+            except ValueError:
+                host_is_ip = 'false'
+            
+            if host_is_ip == 'true':
+                hostlist.append(hosts)
+            else:
+                def dig():
+                    for ip in dns.resolver.query(hosts, 'A'):
+                        return str(ip)
+                hostlist.append(dig())
+ 
+        hostnames = hostlist
+
+        for hosts in hostnames:
             logfile = []
             def general_info():
-                    host = api.host(hosts)
-                    return ("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
+                return ("IP: %s \n Organization: %s \n Operating System: %s" % (api.host(hosts)['ip_str'], api.host(hosts).get('org', 'n/a'), api.host(hosts).get('os', 'n/a')))
                 
             def other_info():
                 conn = sqlite3.connect('shodan-scan')
@@ -103,9 +149,7 @@ try:
                                 (varchar)''')
                 except sqlite3.OperationalError:
                     pass
-                for hosts in c.execute('SELECT * FROM hostnames'):
-                    host = api.host(hosts)
-                for item in host['data']:
+                for item in api.host(hosts)['data']:
                             return ("Port: %s \n Banner: %s" % (item['port'], item['data'])) 
         
             logfile.append(general_info())
