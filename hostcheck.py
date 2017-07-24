@@ -5,8 +5,17 @@ from IPy import IP
 import sqlite3
 import dns.resolver
 import shodan
+from slacker import Slacker
+import sys
+import subprocess
 
-api_key = ""
+slack_token = ""
+slack_channel = ""
+slack_enabled = "false"
+
+shodan_api_key = ""
+
+api_key = shodan_api_key
 
 if api_key == str(""):
     print('please give api_key variable in ' + sys.argv[0] + ' the correct Shodan API value')
@@ -51,4 +60,15 @@ for hosts in hostnames:
 
 
 final_info = ''.join(info)
-print(final_info)
+
+token = slack_token
+channel = slack_channel
+enabled = slack_enabled
+
+slack = Slacker(str(token))
+
+if enabled == "false":
+    sys.exit(0)
+
+slack.chat.post_message(str(channel), str(final_info))
+
