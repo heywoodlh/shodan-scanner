@@ -21,7 +21,7 @@ First, install the dependencies in requirements.txt by running:
 
 
 #### Shodan Configuration
-Edit "api_key" variable within shodan file to equal correct Shodan API key value.
+Edit "shodan_api_key" variable within shodan file to equal correct Shodan API key value.
 
 ### shodan_scanner
 The shodan program is intended to search shodan for a keyword (such as webcams, apache, etc.) or for specific hosts. This program requires that you search hosts using IP addresses and not domain names.
