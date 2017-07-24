@@ -5,19 +5,14 @@ These scripts are intended to easily use Shodan's API to search and scan for hos
 
 This collection of scripts are built on the Shodan Python module for the Shodan searches and the Slacker python module for Slack notification integration. 
 
-These scripts were designed to use Slack as the main notification/logging agent. Without Slack integration there will not be a persistent text record of the log files if using the hostcheck.sh script.
-
 
 
 #### File description:
-- hostcheck.sh: Script that will search Shodan for any information posted on hosts specified in hosts.txt file and will send any relevant information to Slack channel specified in slack-notify.py (requires files shodan and slack-notify.py to be configured for Shodan/Slack integrations). This script uses the "shodan" file in this repository to do searches for the hosts using Shodan's API. It also uses the functionality of sqlite3 (built into the shodan program in this repository) to know which hosts to scan. Lastly, this script also uses slack-notify.py to send notifications to Slack using the API key and channel specified in slack-notify.py. See below for usage details.
+- hostcheck.py: This program will scan all hosts specified in the shodan-scan database. It integrates with Slack and will send scan results to specified Slack channel.
 
 - requirements.txt: Contains Python dependencies essential for scripts to run correctly.
 
-- shodan: Python program that interacts with Shodan's API to search for key words or specific hosts. See below for usage information.
-
-- slack-notify.py: Python program that will send the text in shodanhostscan.log to Slack. Contains token, channel and enabled variables which will need to be configured with correct information in order to send notifications.
-
+- shodan_scanner: Python program that interacts with Shodan's API to search for key words or specific hosts. Stores specific hosts in database for scanning later. See below for usage information.
 
 ## Usage:
 First, install the dependencies in requirements.txt by running:
@@ -28,12 +23,7 @@ First, install the dependencies in requirements.txt by running:
 #### Shodan Configuration
 Edit "api_key" variable within shodan file to equal correct Shodan API key value.
 
-#### Slack configuration
-Edit "token" and "channel" variables within slack-notify.py to equal respective Slack API key (token) and Slack channel. Also change the 'enabled = "false"' to 'enabled = "true"' within slack-notify.py to enable Slack notifications.
-
-The two files intended to be executed on their own is "shodan" and "hostcheck.sh". File "shodan" needs to be configured with Shodan API key or else it will not work.
-
-### shodan
+### shodan_scanner
 The shodan program is intended to search shodan for a keyword (such as webcams, apache, etc.) or for specific hosts. This program requires that you search hosts using IP addresses and not domain names.
 
 - shodan usage example:
@@ -52,5 +42,9 @@ The shodan program has been built with sqlite to store hostnames if continuous s
 
 `./shodan hostscan-all` -- performs a host scan on all hosts stored in the database
 
-### hostcheck.sh
-The hostcheck.sh script is intended to either be run as a cron job or as a stand alone script. Once it is executed it will read the hosts that have been added to the sqlite database through the shodan program in this repository and searches Shodan using the API to see if there is any relevant information specific to each respective host stored on Shodan. It will then save that output to shodanhostscan.log, overwriting any information that it may have stored previously. Then it executes slack-notify.py which reads the shodanhostscan.log file and sends that output to the respective Slack team and channel that is configured in slack-notify.py. 
+### hostcheck.py
+Hostcheck.py will scan all hosts that are in the shodan-scan database. Refer to the usage of shodan_scanner as to know how to list, add or remove hosts in database. In order for hostcheck.py to work the variable "shodan_api_key" will need to be set within hostcheck.py. 
+This program was built with the intention of running as a scheduled, repeating job and then pushing the notifications to Slack.
+
+#### Slack Configuration
+In order to enable Slack integration to work properly, the variables "slack_token" and "slack_channel" will have to be set to the correct Slack API key and channel of the team the notifications will be sent to. In order to actually enable Slack notifications, the "slack_enabled" variable will have to be set to "true".
