@@ -9,11 +9,12 @@ from slacker import Slacker
 import sys
 import subprocess
 
+shodan_api_key = ""
+
 slack_token = ""
 slack_channel = ""
 slack_enabled = "false"
 
-shodan_api_key = ""
 
 api_key = shodan_api_key
 
