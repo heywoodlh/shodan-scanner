@@ -3,7 +3,9 @@ chardet==3.0.4
 click==6.7
 click-plugins==1.0.3
 colorama==0.3.9
+dnspython==1.15.0
 idna==2.5
+IPy==0.83
 requests==2.18.1
 shodan==1.7.3
 slacker==0.9.50
