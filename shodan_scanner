@@ -7,7 +7,9 @@ import dns.resolver
 import re
 import urllib.parse
 
-api_key = ""
+shodan_api_key = ""
+
+api_key = shodan_api_key
 
 commands = ["search", "host", "host-add", "host-delete", "host-list", "hostscan-all", "list-scanlogs"]
 
