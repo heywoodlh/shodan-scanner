@@ -1,188 +1,234 @@
 #!/usr/bin/env python3
 import shodan
 import sys
+import argparse
 import sqlite3
 from IPy import IP
 import dns.resolver
 import re
 import urllib.parse
+import pathlib
+import os
 
-shodan_api_key = ""
 
-api_key = shodan_api_key
+shodan_dir = str(pathlib.Path.home()) + '/.shodan'
 
-commands = ["search", "host", "host-add", "host-delete", "host-list", "hostscan-all", "list-scanlogs"]
+shodan_default_db = shodan_dir + '/shodan.db'
 
-if api_key == str(""):
-    print('please give api_key variable in ' + sys.argv[0] + ' the correct Shodan API value')
+if not os.path.exists(shodan_dir):
+    os.makedirs(shodan_dir)
+
+## argparse arguments
+parser = argparse.ArgumentParser(description="Wrapper for querying Shodan's database using shodan.io's API")
+
+subparsers = parser.add_subparsers(help='sub-command help', dest='command')
+
+## Init subparser
+parser_init = subparsers.add_parser('init', help='initialize shodan with API key')
+parser_init.add_argument('--api_key', help='shodan API key', metavar='KEY')
+parser_init.add_argument('--db', help='specify different database file to utilize', metavar='FILE', default=shodan_default_db)
+
+## Search subparser
+parser_search = subparsers.add_parser('search', help='perform shodan database search on specific host(s)')
+parser_search.add_argument('--host', help='individual host(s)', nargs='+', metavar='HOST')
+parser_search.add_argument('--all', help='perform search on all hosts in local database', action="store_true")
+parser_search.add_argument('--api', help='shodan API key', metavar='KEY')
+parser_search.add_argument('--db', help='specify different local database file to utilize', metavar='FILE', default=shodan_default_db) 
+
+## Query subparser
+parser_query = subparsers.add_parser('query', help='query shodan db for host(s)')
+parser_query.add_argument('--host', help='individual host(s)', nargs='+', metavar='HOST')
+parser_query.add_argument('--all', help='scan all hosts in local database', action="store_true")
+parser_query.add_argument('--api', help='shodan API key', metavar='KEY')
+parser_query.add_argument('--db', help='specify different local database file to utilize', metavar='FILE', default=shodan_default_db)
+parser_query.add_argument('-q', '--quiet', help='suppress output', action="store_true")
+
+## Database subparser
+parser_database = subparsers.add_parser('database', help='interact with local database')
+parser_database.add_argument('--add', help='host(s) to add to database', nargs='+', metavar='HOST')
+parser_database.add_argument('--remove', help='host(s) to remove from database', nargs='+', metavar='HOST')
+parser_database.add_argument('--list', help='list hosts in database', action="store_true")
+parser_database.add_argument('--db', help='specify different local database file to utilize', metavar='FILE', default=shodan_default_db)
+
+
+args = parser.parse_args()
+
+
+def connect_db():
+    global conn
+    conn = sqlite3.connect(args.db)
+    global c
+    c = conn.cursor()
+
+def add_key_value(shodan_api):
+    try:
+        c.execute('''CREATE TABLE api (key TEXT PRIMARY KEY)''')
+    except sqlite3.OperationalError:
+        pass
+    if hasattr(args, 'api_key'):
+        shodan_api = args.api_key
+    else:
+        shodan_api = input('Please enter API key: ')
+    c.execute("INSERT OR REPLACE INTO api VALUES (?)", (shodan_api,))
+    conn.commit()
     sys.exit(0)
 
-api = shodan.Shodan(api_key)
+def get_key_value():
+    global api
+    try:
+        c.execute("SELECT * FROM api")
+    except sqlite3.OperationalError:
+        add_key_value(shodan_api)
+    db_extract = c.fetchone()
+    try:
+        shodan_api = ''.join(db_extract)
+        api = shodan.Shodan(shodan_api)
+    except TypeError:
+        print('Invalid API entry in database.')
+        sys.exit(1)
 
-try:
-    if sys.argv[1] == "-h":
-        print("'syntax: " + str(commands) + " keyword_or_hostname'")
-        print("Please consult the README.md file for more information and usage examples")
-        sys.exit(0)
-
-    if sys.argv[1] == "search" and sys.argv[2:]:
-        for hosts in sys.argv[2:]:
+def initialize():
+    connect_db()
+    if not sys.argv[1] == 'database':
+        if hasattr(args, 'api_key'):
             try:
-        	    results = api.search(hosts)
+                get_key_value()
+                overwrite = input('API already exists in database. Overwrite? (y/n)')
+                if overwrite == 'y':
+                    add_key_value()
+            except sqlite3.OperationalError:
+                add_key_value()
+            sys.exit(0)
+        if args.api:
+            shodan_api = args.api
+        else:
+            get_key_value()
 
-        	    print('Results found: %s' % results['total'])
-        	    for result in results['matches']:
-                	    print('IP: %s' % result['ip_str'])
-                	    print(result['data'])
-                	    print('') 
 
-            except shodan.APIError as e:
-                print('Error: %' % e)
+def search():
+    if args.host:
+        hosts_to_search = args.host
+    if args.all:
+        try:
+            c.execute('''SELECT * FROM hostnames''')
+        except sqlite3.OperationalError:
+            print('Please add valid hosts/IP addresses to local database using the database command')
+            sys.exit(1)
+        hosts_to_search = c.fetchall()
+    for hosts in hosts_to_search:
+        if isinstance(hosts, tuple):
+            hosts = ''.join(hosts)
+        print('Results for ' + hosts + ':')
+        try:
+            results = api.search(hosts)
+            print('Results found: %s' % results['total'])
+            print('')
+            for result in results['matches']:
+                print('IP: %s' % result['ip_str'])
+                print(result['data'])
+            print('')
+            print('')
+        except shodan.APIError as e:
+            print('Error: %' % e)
+            print('')
+            print('')
 
 
-    if sys.argv[1] == "host" and sys.argv[2]:
-        hostnames = sys.argv[2:]
-        hostlist = []
-        for hosts in hostnames:
-            try: 
-                IP(hosts)
-                non_ip = 'false'
-            except ValueError:
-                def dig():
-                    for ip in dns.resolver.query(hosts, 'A'):
-                        return str(ip)
-                hostlist.append(dig())
-                non_ip = 'true'
-        
-        if non_ip == 'true':
-            hostnames = hostlist
+def query():
+    if args.host:
+        hosts_to_query = args.host
+    if args.all:
+        try:
+            c.execute('''SELECT * FROM hostnames''')
+        except sqlite3.OperationalError:
+            print('Please add valid hosts/IP addresses to local database using the database command')
+            sys.exit(1)
+        hosts_to_query = c.fetchall()
+    hostnames = hosts_to_query
+    hostlist = []
+    for hosts in hostnames:
+        if isinstance(hosts, tuple):
+            hosts = ''.join(hosts)
+        try:
+            IP(hosts)
+            non_ip = 'false'
+        except ValueError:
+            def dig():
+                for ip in dns.resolver.query(hosts, 'A'):
+                    return str(ip)
+            hostlist.append(dig())
+            non_ip = 'true'
+    
+    if non_ip == 'true':
+        hostnames = hostlist
 
-        for hosts in hostnames:
+    for hosts in hostnames:
+        print('Results for ' + hosts + ':')
+        print('\n')
+        try:
             host = api.host(hosts)
             print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
             for item in host['data']:
-                    print("Port: %s \n Banner: %s \n" % (item['port'], item['data']))
+                print("Port: %s \n Banner: %s \n" % (item['port'], item['data']))
+            print('')
+            print('')
+        except shodan.exception.APIError:
+            print('Results Found: 0')
+            print('')
+            print('')
+            sys.exit(0)
 
-    if sys.argv[1] == "host-add" and sys.argv[2:]:
-        conn = sqlite3.connect('shodan-scan')
-        c = conn.cursor()
-        try: 
-            c.execute('''CREATE TABLE hostnames
+
+def db_add():
+    try: 
+        c.execute('''CREATE TABLE hostnames
+                (varchar)''')
+    except sqlite3.OperationalError:
+        pass
+    for hosts in args.add:
+        c.execute('INSERT INTO hostnames VALUES (?)', (hosts,))
+        conn.commit()
+
+
+def db_del():
+    try: 
+        c.execute('''CREATE TABLE hostnames
                     (varchar)''')
-        except sqlite3.OperationalError:
-            pass
-        for hosts in sys.argv[2:]:
-            c.execute('INSERT INTO hostnames VALUES (?)', (hosts,))
-            conn.commit()
+    except sqlite3.OperationalError:
+        pass
+    for hosts in args.remove:
+        c.execute("DELETE FROM hostnames WHERE varchar=?", (hosts,))
+        conn.commit()
 
-    if sys.argv[1] == "host-delete" and sys.argv[2:]:
-        conn = sqlite3.connect('shodan-scan')
-        c = conn.cursor()
-        try: 
-            c.execute('''CREATE TABLE hostnames
-                        (varchar)''')
-        except sqlite3.OperationalError:
-            pass
+
+def db_list():
+    try: 
+        c.execute('''CREATE TABLE hostnames
+                    (varchar)''')
+    except sqlite3.OperationalError:
+        pass
+    for row in c.execute("SELECT * FROM hostnames"):
+        print(row)
+
+def database():
+    if args.add:
+        db_add()
+    elif args.remove:
+        db_del()
+    elif args.list:
+        db_list()
+
+def main():
+    initialize()
+    if sys.argv[1] == 'search':
+        search()
+    elif sys.argv[1] == 'query':
+        query()
+    elif sys.argv[1] == 'database':
+        database()
         
-        for hosts in sys.argv[2:]:
-            conn = sqlite3.connect('shodan-scan')
-            c = conn.cursor()
-            c.execute("DELETE FROM hostnames WHERE varchar=?", (hosts,))
-            conn.commit()
+    
+    #if hasattr(args, 'host')
 
-    if sys.argv[1] == "host-list":
-        conn = sqlite3.connect('shodan-scan')
-        c = conn.cursor()
-        try: 
-            c.execute('''CREATE TABLE hostnames
-                        (varchar)''')
-        except sqlite3.OperationalError:
-            pass
-        for row in c.execute("SELECT * FROM hostnames"):
-            print(row)
-
-    if sys.argv[1] == "hostscan-all":
-        conn = sqlite3.connect('shodan-scan')
-        c = conn.cursor()
-        try: 
-            c.execute('''CREATE TABLE hostnames
-                        (varchar)''')
-        except sqlite3.OperationalError:
-            pass
-
-
-        
-        domain_names = []
-
-        for rows in c.execute('SELECT * FROM hostnames'):
-            domain_names.extend(rows)
-        
-        #STOPPED HERE -- domain_names variable printing incorrect formatting for hostnames
-
-        hostlist = []
-
-        for hosts in domain_names:
-            try:
-                IP(hosts)
-                host_is_ip = 'true'
-            except ValueError:
-                host_is_ip = 'false'
-            
-            if host_is_ip == 'true':
-                hostlist.append(hosts)
-            else:
-                def dig():
-                    for ip in dns.resolver.query(hosts, 'A'):
-                        return str(ip)
-                hostlist.append(dig())
- 
-        hostnames = hostlist
-
-        for hosts in hostnames:
-            logfile = []
-            def general_info():
-                return ("IP: %s \n Organization: %s \n Operating System: %s" % (api.host(hosts)['ip_str'], api.host(hosts).get('org', 'n/a'), api.host(hosts).get('os', 'n/a')))
-                
-            def other_info():
-                conn = sqlite3.connect('shodan-scan')
-                c = conn.cursor()
-                try:
-                    c.execute('''CREATE TABLE hostnames
-                                (varchar)''')
-                except sqlite3.OperationalError:
-                    pass
-                for item in api.host(hosts)['data']:
-                            return ("Port: %s \n Banner: %s" % (item['port'], item['data'])) 
-        
-            logfile.append(general_info())
-            logfile.append(other_info())
-        
-            final_logfile = "".join(logfile)
-
-            conn = sqlite3.connect('shodan-scan')
-            c = conn.cursor()
-            try:
-                c.execute('''CREATE TABLE host_logs
-                            (varchar)''')
-            except sqlite3.OperationalError:
-                pass
-            c.execute('INSERT INTO host_logs VALUES (?)', (final_logfile,))
-            print(final_logfile)
-        conn.commit() 
-
-    if sys.argv[1] == "list-scanlogs":
-        def all_logs(): 
-            conn = sqlite3.connect('shodan-scan')
-            c = conn.cursor()
-            try: 
-                c.execute('''CREATE TABLE host_logs
-                            (varchar)''')
-            except sqlite3.OperationalError:
-                pass
-            for row in c.execute("SELECT * FROM host_logs"):
-                return(row)
-        print_logs = ''.join(all_logs())
-        print(print_logs)
-
-except (IndexError, shodan.exception.APIError) as e:
-    print('Error: ' + str(e))
+if __name__ == '__main__':
+    main()
