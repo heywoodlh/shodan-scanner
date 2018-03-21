@@ -9,6 +9,7 @@ import re
 import urllib.parse
 import pathlib
 import os
+import netaddr
 
 
 shodan_dir = str(pathlib.Path.home()) + '/.shodan'
@@ -118,20 +119,28 @@ def search():
     for hosts in hosts_to_search:
         if isinstance(hosts, tuple):
             hosts = ''.join(hosts)
-        print('Results for ' + hosts + ':')
-        try:
-            results = api.search(hosts)
-            print('Results found: %s' % results['total'])
-            print('')
-            for result in results['matches']:
-                print('IP: %s' % result['ip_str'])
-                print(result['data'])
-            print('')
-            print('')
-        except shodan.APIError as e:
-            print('Error: %' % e)
-            print('')
-            print('')
+        if re.match("(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?",hosts):
+            ip = netaddr.IPNetwork(hosts)
+            for addr in ip:
+                true_search(addr) 
+        else:
+            true_search(hosts)
+
+def true_search(hosts):
+    print('Results for ' + str(hosts) + ':')
+    try:
+        results = api.search(str(hosts))
+        print('Results found: %s' % results['total'])
+        print('')
+        for result in results['matches']:
+            print('IP: %s' % result['ip_str'])
+            print(result['data'])
+        print('')
+        print('')
+    except shodan.APIError as e:
+        print('Error: %' % e)
+        print('')
+        print('')
 
 
 def query():
@@ -150,8 +159,11 @@ def query():
         if isinstance(hosts, tuple):
             hosts = ''.join(hosts)
         try:
-            IP(hosts)
-            non_ip = 'false'
+            if re.match("(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?",hosts):
+                non_ip = 'false'
+            else:
+                IP(hosts)
+                non_ip = 'false'
         except ValueError:
             def dig():
                 for ip in dns.resolver.query(hosts, 'A'):
@@ -163,20 +175,33 @@ def query():
         hostnames = hostlist
 
     for hosts in hostnames:
-        print('Results for ' + hosts + ':')
-        print('\n')
-        try:
-            host = api.host(hosts)
-            print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
-            for item in host['data']:
-                print("Port: %s \n Banner: %s \n" % (item['port'], item['data']))
-            print('')
-            print('')
-        except shodan.exception.APIError:
-            print('Results Found: 0')
-            print('')
-            print('')
-            sys.exit(0)
+        if isinstance(hosts, tuple):
+            try:
+                hosts = ''.join(hosts)
+            except TypeError:
+                pass
+        if re.match("(?:\d{1,3}\.){3}\d{1,3}(?:/\d\d?)?",hosts):
+            ip = netaddr.IPNetwork(hosts)
+            for addr in ip:
+                true_query(addr) 
+        else:
+            true_query(hosts)
+
+
+def true_query(hosts):
+    print('Results for ' + str(hosts) + ':')
+    print('\n')
+    try:
+        host = api.host(str(hosts))
+        print("IP: %s \n Organization: %s \n Operating System: %s" % (host['ip_str'], host.get('org', 'n/a'), host.get('os', 'n/a')))
+        for item in host['data']:
+            print("Port: %s \n Banner: %s \n" % (item['port'], item['data']))
+        print('')
+        print('')
+    except shodan.exception.APIError:
+        print('Results Found: 0')
+        print('')
+        print('')
 
 
 def db_add():
