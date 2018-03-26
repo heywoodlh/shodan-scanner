@@ -37,9 +37,9 @@ In simplistic terms, the difference between `query` and `search` is that `query`
 
 - shodan_scanner usage example:
 
-`./shodan search --host 63.55.55.55` -- this performs a keyword search on the word "apache"
+`./shodan search --host 63.55.55.55` -- this performs a keyword search for the host 63.55.55.55
 
-`./shodan query --host 63.33.33.33`-- this performs a host lookup on Shodan for the IP address 205.120.89.10
+`./shodan query --host 63.33.33.33`-- this performs a host lookup on Shodan for the IP address 63.33.33.33
 
 The shodan program has been built with sqlite to store hostnames if continuous scanning is desired for specific hosts. These are the basic commands for this functionality:
 
