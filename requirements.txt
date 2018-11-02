@@ -8,7 +8,7 @@ idna==2.5
 IPy==0.83
 netaddr==0.7.19
 pathlib==1.0.1
-requests==2.18.1
+requests==2.20.0
 shodan==1.7.3
 slacker==0.9.50
 urllib3==1.21.1
