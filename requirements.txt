@@ -11,5 +11,5 @@ pathlib==1.0.1
 requests==2.20.0
 shodan==1.7.3
 slacker==0.9.50
-urllib3==1.21.1
+urllib3==1.24.2
 XlsxWriter==0.9.8
